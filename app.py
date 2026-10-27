@@ -600,7 +600,9 @@ def purchase_component():
     directory=Path(tempfile.gettempdir())/('soleol_purchase_ui_'+digest)
     directory.mkdir(exist_ok=True)
     (directory/'index.html').write_text(INTERFACE_HTML,encoding='utf-8')
-    return components.declare_component('soleol_purchase_ui',path=str(directory))
+    # Le nom fait partie de l’URL servie au navigateur : une nouvelle interface
+    # reçoit une nouvelle URL et ne peut pas réutiliser l’ancien index en cache.
+    return components.declare_component('soleol_purchase_ui_'+digest,path=str(directory))
 
 
 def process_action(action,store,user):
