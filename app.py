@@ -11,6 +11,20 @@ from html import escape
 from contextlib import contextmanager
 import streamlit as st
 
+from pathlib import Path as _ConfigPath
+from dotenv import dotenv_values
+
+# Neon CLI écrit DATABASE_URL dans .env.local (ou .env). Streamlit Cloud
+# continue à lire ses Secrets ; aucun identifiant n’est inclus dans le code.
+for _env_name in ('.env.local','.env'):
+    _env_path=_ConfigPath(__file__).resolve().parent/_env_name
+    if _env_path.is_file():
+        _env_values=dotenv_values(_env_path)
+        for _env_key in ('DATABASE_URL','DATABASE_URL_UNPOOLED'):
+            if _env_values.get(_env_key):
+                os.environ.setdefault(_env_key,_env_values[_env_key])
+
+
 
 def setting(name, default=''):
     if name in os.environ:
@@ -790,8 +804,7 @@ def main():
             elif setting('DATABASE_URL'):
                 store=OrderStore(buyer_ids(),url=setting('DATABASE_URL'))
             else:
-                sessions=st.session_state.setdefault('session_orders',{})
-                store=OrderStore(buyer_ids(),memory=sessions.setdefault(str(user['id']),{}))
+                raise ValueError('Sauvegarde permanente non configurée. Ajoutez DATABASE_URL dans les Secrets Streamlit avant de saisir des commandes.')
             orders=store.list(user)
         except ValueError as exc:
             error=str(exc);store=None
